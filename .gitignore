@@ -205,3 +205,13 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+/src/python/playground.py
+/src/python/generate_fake_db.py
+
+
+# Pycharm
+.idea/
+
+# MacOS
+.DS_Store
+
