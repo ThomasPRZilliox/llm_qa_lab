@@ -215,3 +215,4 @@ __marimo__/
 # MacOS
 .DS_Store
 
+/src/python/fake_db.db
