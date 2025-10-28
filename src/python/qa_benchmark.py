@@ -1,5 +1,11 @@
 import sqlite3
 import torch
+from evaluate import load
+from nltk.translate.bleu_score import sentence_bleu
+from rouge_score import rouge_scorer
+
+scorer = rouge_scorer.RougeScorer(['rouge1', 'rouge2', 'rougeL'], use_stemmer=True)
+
 
 class QABenchmark:
     def __init__(self,db_file):
@@ -44,8 +50,22 @@ class QABenchmark:
             generated = tokenizer.decode(outputs[0], skip_special_tokens=True)
             generated_answer = generated.split("Answer:")[-1].strip()
 
-            # Here we just return raw output; later we can add a scoring function ✅
-            results.append((question, expected_answer, generated_answer))
+            # print(generated_answer.split())
+            # print(expected_answer.split())
+
+            bleu_score  = sentence_bleu(hypothesis=generated_answer.split(), references=[expected_answer.split()])
+            rouge_score = scorer.score(expected_answer, generated_answer)
+            single_score = rouge_score["rougeL"].fmeasure
+
+
+            evaluation = {
+                "question": question,
+                "answer": generated_answer,
+                "expected_answer": expected_answer,
+                "bleu_score": bleu_score,
+                "rouge_score": single_score
+            }
+            results.append(evaluation)
         return results
 
     def evaluate_all(self, tokenizer, model, device, batch_size=20):
