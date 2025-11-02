@@ -3,8 +3,26 @@ import torch
 from evaluate import load
 from nltk.translate.bleu_score import sentence_bleu
 from rouge_score import rouge_scorer
+import nltk
+import ssl
+
+# Fix SSL certificate issue (common on macOS)
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
+
+# Download required data (will skip if already downloaded)
+nltk.download('punkt_tab', quiet=True)
+nltk.download('wordnet', quiet=True)
+nltk.download('omw-1.4', quiet=True)
 
 scorer = rouge_scorer.RougeScorer(['rouge1', 'rouge2', 'rougeL'], use_stemmer=True)
+
+# Load METEOR metric
+meteor = load('meteor')
 
 
 class QABenchmark:
@@ -57,13 +75,15 @@ class QABenchmark:
             rouge_score = scorer.score(expected_answer, generated_answer)
             single_score = rouge_score["rougeL"].fmeasure
 
+            meteor_score = meteor.compute(predictions=[expected_answer], references=[generated_answer])
 
             evaluation = {
                 "question": question,
                 "answer": generated_answer,
                 "expected_answer": expected_answer,
                 "bleu_score": bleu_score,
-                "rouge_score": single_score
+                "rouge_score": single_score,
+                "meteor_score": meteor_score
             }
             results.append(evaluation)
         return results
